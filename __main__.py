@@ -26,7 +26,6 @@ class Prenota:
         self.password = os.getenv('password')
         self.driver = webdriver.Safari()
 
-
     def check_file_exists(file_name):
         parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
         file_path = os.path.join(parent_dir, file_name)
@@ -48,35 +47,49 @@ class Prenota:
             password_box = self.driver.find_element(By.ID, "login-password")
             email_box.send_keys(self.email)
             password_box.send_keys(self.password)
+            logging.info('Logged successfuly!')
         except Exception as e:
             logging.info(f"Exception: {e}")
 
     def fill_form(self):
-        file_location = os.path.join('files/endereco.pdf')
+        file_location = os.path.join('files/residencia.pdf')
         choose_file = self.driver.find_elements(By.ID, "File_0")
         choose_file[0].send_keys(file_location)
         privacy_check = self.driver.find_elements(By.ID, "PrivacyCheck")
         privacy_check[0].click()
 
-    if __name__ == "__main__":
-        
-        do_login(self)
+    def schedule_citizenship(self):
+        self.driver.get('https://prenotami.esteri.it/Services/Booking/751')
+        appts_available = self.driver.find_element(By.XPATH, "//*[@id='WlNotAvailable']").get_attribute("value")
+            
+        if appts_available == 'Al momento non ci sono date disponibili per il servizio richiesto':
+            logging.info("TIMESTAMP: " + str(datetime.now()))
+            logging.info("No change to prenotami detected.")
+        else:
+            logging.info("TIMESTAMP: " + str(datetime.now()))
+            logging.info("Proceeding with form filling")
+            fill_form(self)
+            submit = self.driver.find_elements(By.ID, "btnAvanti")
+            submit[0].click()
+            time.sleep(60)
+            test = driver.find_elements(By.ID, "ServizioDescrizione")
+            if test:
+            while(i<50):
+                    winsound.Beep(400,500)
+                    i = i+1
 
-        if request_type == 'citizenship':
-            self.driver.get('https://prenotami.esteri.it/Services/Booking/751')
-            appts_available = self.driver.find_element(By.XPATH, "//*[@id='WlNotAvailable']").get_attribute("value")
+    if __name__ == "__main__":
+
+        if check_file_exists('files/residencia.pdf'):
             
-            if appts_available == 'Al momento non ci sono date disponibili per il servizio richiesto':
-                logging.info("TIMESTAMP: " + str(datetime.now()))
-                logging.info("No change to prenotami detected.")
-                sys.exit(0)
-            else:
-                message = "Change detected on prenotami, please check system for available appointments."
-                logging.info("TIMESTAMP: " + str(datetime.now()))
-                logging.info("Change detected on prenotami.")
-                fill_form(self)
-        elif request_type == 'passport':
-            ...
-            
-        # Close the driver once the page has loaded
-        driver.quit()
+            do_login(self)
+
+            if request_type == 'citizenship':
+                schedule_citizenship(self)
+                
+            elif request_type == 'passport':
+                ...
+        else:
+            logging.info('Required files not available. Ending execution')
+        # Close the driver once the page has loaded - since we will have to deal manually with schedule, will keep driver open
+        # driver.quit()
