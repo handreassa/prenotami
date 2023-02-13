@@ -51,8 +51,12 @@ class Prenota:
         except Exception as e:
             logging.info(f"Exception: {e}")
 
-    def fill_form():
-        ...
+    def fill_form(self):
+        file_location = os.path.join('files/endereco.pdf')
+        choose_file = self.driver.find_elements(By.ID, "File_0")
+        choose_file[0].send_keys(file_location)
+        privacy_check = self.driver.find_elements(By.ID, "PrivacyCheck")
+        privacy_check[0].click()
 
     if __name__ == "__main__":
         
@@ -71,6 +75,8 @@ class Prenota:
                 logging.info("TIMESTAMP: " + str(datetime.now()))
                 logging.info("Change detected on prenotami.")
                 fill_form(self)
+        elif request_type == 'passport':
+            ...
             
         # Close the driver once the page has loaded
         driver.quit()

@@ -1,1 +1,1 @@
-request_type: citizenship
+request_type: citizenship #this value should be either citizenship or passport
