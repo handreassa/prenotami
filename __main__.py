@@ -4,9 +4,13 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import Select
 from datetime import datetime
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from time import sleep
 import logging
 import yaml
@@ -42,7 +46,12 @@ class Prenota:
             password = os.getenv("password")
             user_config = load_config("parameters.yaml")
 
-            driver = webdriver.Safari()
+            # driver = webdriver.Safari()
+            chrome_options = ChromeOptions()
+            chrome_options.add_experimental_option("detach", True)
+            chrome_options.add_argument("--start-maximized")
+            # driver = webdriver.Chrome('files/chromedriver.exe', chrome_options=chrome_options)
+            driver = webdriver.Chrome(service=Service("files/chromedriver"), options=chrome_options)
 
             try:
                 driver.get("https://prenotami.esteri.it/")
@@ -142,6 +151,7 @@ class Prenota:
                 form_submit.click()
         else:
             logging.info("Required files not available. Ending execution")
+            sys.exit(0)
 
 
         sleep(200)
