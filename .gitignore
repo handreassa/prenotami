@@ -130,3 +130,5 @@ dmypy.json
 
 # To avoid uploading personal data files
 *.pdf
+
+*.exe
