@@ -63,7 +63,7 @@ class Prenota:
                 password_box = driver.find_element(By.ID, "login-password")
                 email_box.send_keys(email)
                 password_box.send_keys(password)
-                sleep(2)
+                time.sleep(2)
                 button = driver.find_elements(
                     By.XPATH, "//button[contains(@class,'button primary g-recaptcha')]"
                 )
@@ -100,8 +100,6 @@ class Prenota:
                             privacy_check[0].click()
                             submit = driver.find_elements(By.ID, "btnAvanti")
                             submit[0].click()
-                            time.sleep(60)
-                            test = driver.find_elements(By.ID, "ServizioDescrizione")
                             with open("files/citizenship_form.html", "w") as f:
                                 f.write(driver.page_source)
                             break
