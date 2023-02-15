@@ -19,7 +19,7 @@ Python bot to log into [prenot@mi](prenotami.esteri.it) and schedule citizenship
 
 - Add username and password to log in to prenota in the .env file.
 
-- Add a file called residencia.pdf under the files folder to be uploaded in the scheduling process.
+- Add a file called residencia.pdf under the files folder to be uploaded in the scheduling process. For passport there is also a need to add the identity file in the same folder, named identidade.pdf.
 
 ---
 

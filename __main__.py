@@ -5,12 +5,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ChromeOptions
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import Select
 from datetime import datetime
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import NoSuchElementException
 from time import sleep
 import logging
 import yaml
@@ -39,22 +37,6 @@ class Prenota:
             # Load the YAML content into a Python dictionary
             config = yaml.safe_load(file)
         return config
-
-    def eval_availability(appts_available) -> bool:
-        """ "Receives the value displayed in the screen for both scheduling types and return if it should proceed with form filling or try to book again"""
-        if (
-            appts_available
-            == "Al momento non ci sono date disponibili per il servizio richiesto"
-        ):
-            logging.info(
-                f"Timestamp: {str(datetime.now())} - Scheduling is not available right now."
-            )
-            return False
-        else:
-            logging.info(
-                f"Timestamp: {str(datetime.now())} - Proceeding with form filling..."
-            )
-            return True
 
     if __name__ == "__main__":
         if check_file_exists("files/residencia.pdf"):
@@ -93,17 +75,24 @@ class Prenota:
             except Exception as e:
                 logging.info(f"Exception: {e}")
 
-            for i in range(4):
+            for i in range(200):
                 random_number = random.randint(1, 5)
 
                 if user_config["request_type"] == "citizenship":
                     try:
                         driver.get("https://prenotami.esteri.it/Services/Booking/751")
-                        appts_available = driver.find_element(
-                            By.XPATH, "//*[@id='WlNotAvailable']"
-                        ).get_attribute("value")
 
-                        if eval_availability(appts_available):
+                        try:
+                            appts_available = driver.find_element(
+                                By.XPATH, "//*[@id='WlNotAvailable']"
+                            ).get_attribute("value")
+                            logging.info(
+                                f"Timestamp: {str(datetime.now())} - Scheduling is not available right now."
+                            )
+                        except NoSuchElementException:
+                            logging.info(
+                                f"Timestamp: {str(datetime.now())} - Element WlNotAvailable not found. Start filling the forms."
+                            )
                             file_location = os.path.join("files/residencia.pdf")
                             choose_file = driver.find_elements(By.ID, "File_0")
                             choose_file[0].send_keys(file_location)
@@ -115,7 +104,6 @@ class Prenota:
                             test = driver.find_elements(By.ID, "ServizioDescrizione")
                             with open("files/citizenship_form.html", "w") as f:
                                 f.write(driver.page_source)
-                            sleep(400)
                             break
                     except Exception as e:
                         logging.info(f"Exception {e}")
@@ -125,11 +113,18 @@ class Prenota:
                     try:
                         driver.get("https://prenotami.esteri.it/Services/Booking/671")
 
-                        appts_available = driver.find_element(
-                            By.XPATH, "//*[@id='WlNotAvailable']"
-                        ).get_attribute("value")
+                        try:
+                            appts_available = driver.find_element(
+                                By.XPATH, "//*[@id='WlNotAvailable']"
+                            ).get_attribute("value")
+                            logging.info(
+                                f"Timestamp: {str(datetime.now())} - Scheduling is not available right now."
+                            )
+                        except NoSuchElementException:
+                            logging.info(
+                                f"Timestamp: {str(datetime.now())} - Element WlNotAvailable not found. Start filling the forms."
+                            )
 
-                        if eval_availability(appts_available):
                             with open("files/passport_form.html", "w") as f:
                                 f.write(driver.page_source)
 
@@ -159,23 +154,19 @@ class Prenota:
                             time.sleep(1)
 
                             file0 = driver.find_element_by_xpath('//*[@id="File_0"]')
-                            file0.send_keys(os.getcwd() + "/files/residencia.pdf")
+                            file0.send_keys(os.getcwd() + "/files/identidade.pdf")
 
                             time.sleep(1)
 
                             file1 = driver.find_element_by_xpath('//*[@id="File_1"]')
-                            file1.send_keys(os.getcwd() + "/files/residencia_2.pdf")
+                            file1.send_keys(os.getcwd() + "/files/residencia.pdf")
 
-                            checkBox = driver.find_element_by_xpath(
-                                '//*[@id="PrivacyCheck"]'
-                            )
+                            checkBox = driver.find_element_by_id("PrivacyCheck")
                             checkBox.click()
 
-                            form_submit = driver.find_element_by_xpath(
-                                '//*[@id="submit"]'
-                            )
+                            form_submit = driver.find_element_by_id("btnAvanti")
                             form_submit.click()
-                            sleep(400)
+
                             break
                     except Exception as e:
                         logging.info(f"Exception {e}")
@@ -188,6 +179,10 @@ class Prenota:
                 "Required files not available. Check the required files in readme.md file. Ending execution."
             )
             sys.exit(0)
-
-        # Close the driver once the page has loaded - since we will have to deal manually with schedule, will keep driver open
-        driver.quit()
+        user_input = input(
+            f"Timestamp: {str(datetime.now())} - Go ahead and fill manually the rest of the process. When finished, type quit to exit the program and close the browser. "
+        )
+        while True:
+            if user_input == "quit":
+                driver.quit()
+                break
