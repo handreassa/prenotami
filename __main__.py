@@ -25,7 +25,6 @@ logging.basicConfig(
     handlers=[logging.FileHandler("/tmp/out.log"), logging.StreamHandler(sys.stdout)],
 )
 
-
 class Prenota:
     def check_file_exists(file_name):
         # parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
@@ -38,6 +37,18 @@ class Prenota:
             # Load the YAML content into a Python dictionary
             config = yaml.safe_load(file)
         return config
+    
+    def eval_availability(appts_available) -> bool:
+        """"Receives the value displayed in the screen for both scheduling types and return if it should proceed with form filling or try to book again"""
+        if (appts_available == "Al momento non ci sono date disponibili per il servizio richiesto"):
+            logging.info("if TIMESTAMP: " + str(datetime.now()))
+            logging.info("Info: scheduling is not available right now.")
+            return False
+        else:
+            logging.info("else TIMESTAMP: " + str(datetime.now()))
+            logging.info("Proceeding with form filling...")
+            return True
+        
 
     if __name__ == "__main__":
 
@@ -51,19 +62,18 @@ class Prenota:
             chrome_options.add_experimental_option("detach", True)
             chrome_options.add_argument("--start-maximized")
             # driver = webdriver.Chrome('files/chromedriver.exe', chrome_options=chrome_options)
-            driver = webdriver.Chrome(service=Service("files/chromedriver"), options=chrome_options)
+            driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 
             try:
                 driver.get("https://prenotami.esteri.it/")
                 # Wait for the page to fully load
-                driver.implicitly_wait(5)
                 email_box = WebDriverWait(driver, 60).until(
                     EC.presence_of_element_located((By.ID, "login-email"))
                 )
                 password_box = driver.find_element(By.ID, "login-password")
                 email_box.send_keys(email)
                 password_box.send_keys(password)
-                sleep(3)
+                sleep(2)
                 button = driver.find_elements(By.XPATH, "//button[contains(@class,'button primary g-recaptcha')]")
                 button[0].click()
                 logging.info("Logged successfuly!")
@@ -74,19 +84,10 @@ class Prenota:
             if user_config["request_type"] == "citizenship":
                 try:
                     driver.get("https://prenotami.esteri.it/Services/Booking/751")
-                    appts_available = driver.find_element(
-                        By.XPATH, "//*[@id='jconfirm-box99354']"
-                    ).get_attribute("value")
+                    appts_available = driver.find_element(By.XPATH, "//*[@id='WlNotAvailable']").get_attribute("value")
 
-                    if (
-                        appts_available
-                        == "Al momento non ci sono date disponibili per il servizio richiesto"
-                    ):
-                        logging.info("TIMESTAMP: " + str(datetime.now()))
-                        logging.info("Info: scheduling is not available")
-                    else:
-                        logging.info("TIMESTAMP: " + str(datetime.now()))
-                        logging.info("Proceeding with form filling")
+                    if eval_availability(appts_available):
+                        
                         file_location = os.path.join("files/residencia.pdf")
                         choose_file = driver.find_elements(By.ID, "File_0")
                         choose_file[0].send_keys(file_location)
@@ -96,64 +97,69 @@ class Prenota:
                         submit[0].click()
                         time.sleep(60)
                         test = driver.find_elements(By.ID, "ServizioDescrizione")
-                        if test:
-                            for i in range(50):
-                                winsound.Beep(400, 500)
+                        with open('files/citizenship_form.html', 'w') as f:
+                            f.write(driver.page_source)
+                        sleep(400)
                 except Exception as e:
                     logging.info(f"Exception {e}")
 
             elif user_config["request_type"] == "passport":
-                q0 = Select(driver.find_element_by_id("ddls_0"))
-                q0.select_by_visible_text(
-                    "No"
-                )  # Possess expired italian passport? Yes or no
+                driver.get("https://prenotami.esteri.it/Services/Booking/671")
+                appts_available = driver.find_element(By.XPATH, "//*[@id='WlNotAvailable']").get_attribute("value")
 
-                # Dropdown Menu Question 2
-                q1 = Select(driver.find_element_by_id("ddls_1"))
-                q1.select_by_visible_text("No")  # Has under age child? Yes or No
+                if eval_availability(appts_available):
+                    with open('files/passport_form.html', 'w') as f:
+                            f.write(driver.page_source)
+                    
+                    q0 = Select(driver.find_element_by_id("ddls_0"))
+                    q0.select_by_visible_text(
+                        "No"
+                    )  # Possess expired italian passport? Yes or no
 
-                # Text Question 1
-                q2 = driver.find_element_by_id("DatiAddizionaliPrenotante_2___testo")
-                q2.send_keys("0")  # Number of children - send total
+                    # Dropdown Menu Question 2
+                    q1 = Select(driver.find_element_by_id("ddls_1"))
+                    q1.select_by_visible_text("No")  # Has under age child? Yes or No
 
-                # Text Question 2 (Address)
-                q3 = driver.find_element_by_id("DatiAddizionaliPrenotante_3___testo")
-                q3.send_keys(
-                    "YOUR-FULL-RESIDENTIAL-ADDRESS"
-                )  # Residential address - full address
+                    # Text Question 1
+                    q2 = driver.find_element_by_id("DatiAddizionaliPrenotante_2___testo")
+                    q2.send_keys("0")  # Number of children - send total
 
-                # Dropdown Menu Question 3
-                q4 = Select(driver.find_element_by_id("ddls_4"))
-                q4.select_by_visible_text(
-                    "YOUR-MARITAL-STATUS"
-                )  # Marital status - fill it with the available options
+                    # Text Question 2 (Address)
+                    q3 = driver.find_element_by_id("DatiAddizionaliPrenotante_3___testo")
+                    q3.send_keys(
+                        "YOUR-FULL-RESIDENTIAL-ADDRESS"
+                    )  # Residential address - full address
 
-                time.sleep(1)
+                    # Dropdown Menu Question 3
+                    q4 = Select(driver.find_element_by_id("ddls_4"))
+                    q4.select_by_visible_text(
+                        "YOUR-MARITAL-STATUS"
+                    )  # Marital status - fill it with the available options
 
-                # File Upload 1
-                file0 = driver.find_element_by_xpath('//*[@id="File_0"]')
-                file0.send_keys(os.getcwd() + "/files/residencia.pdf")  # FILL THIS
+                    time.sleep(1)
 
-                time.sleep(1)
+                    # File Upload 1
+                    file0 = driver.find_element_by_xpath('//*[@id="File_0"]')
+                    file0.send_keys(os.getcwd() + "/files/residencia.pdf")  # FILL THIS
 
-                # File Upload 2
-                file1 = driver.find_element_by_xpath('//*[@id="File_1"]')
-                file1.send_keys(
-                    os.getcwd() + "/Documents/ADDRESS-FILE-NAME.pdf"
-                )  # FILL THIS
+                    time.sleep(1)
 
-                # CheckBox
-                checkBox = driver.find_element_by_xpath('//*[@id="PrivacyCheck"]')
-                checkBox.click()
+                    # File Upload 2
+                    file1 = driver.find_element_by_xpath('//*[@id="File_1"]')
+                    file1.send_keys(
+                        os.getcwd() + "/files/residencia_2.pdf"
+                    )  # FILL THIS
 
-                # Submit Button
-                form_submit = driver.find_element_by_xpath('//*[@id="submit"]')
-                form_submit.click()
+                    # CheckBox
+                    checkBox = driver.find_element_by_xpath('//*[@id="PrivacyCheck"]')
+                    checkBox.click()
+
+                    # Submit Button
+                    form_submit = driver.find_element_by_xpath('//*[@id="submit"]')
+                    form_submit.click()
         else:
-            logging.info("Required files not available. Ending execution")
+            logging.info("Required files not available. Check the required files in readme.md file. Ending execution.")
             sys.exit(0)
 
-
-        sleep(200)
         # Close the driver once the page has loaded - since we will have to deal manually with schedule, will keep driver open
-        # driver.quit()
+        driver.quit()
