@@ -165,6 +165,9 @@ class Prenota:
                             form_submit = driver.find_element_by_id("btnAvanti")
                             form_submit.click()
 
+                            with open("files/passport_form.html", "w") as f:
+                                f.write(driver.page_source)
+
                             break
                     except Exception as e:
                         logging.info(f"Exception {e}")
