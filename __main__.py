@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service #Fix deprecated executable_path
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -47,12 +48,15 @@ class Prenota:
             password = os.getenv("password")
             user_config = load_config("parameters.yaml")
             print(user_config.get("full_address"))
-            chrome_options = ChromeOptions()
+            chrome_options = ChromeOptions() #Some changes for optimize the load
             chrome_options.add_experimental_option("detach", True)
             chrome_options.add_argument("--start-maximized")
+            chrome_options.add_argument("--disable-dev-shm-usage")
+            chrome_options.add_argument('--blink-settings=imagesEnabled=false')
+            chrome_options.add_argument("--no-sandbox")
             driver = webdriver.Chrome(
-                ChromeDriverManager().install(), options=chrome_options
-            )
+                options=chrome_options, service=Service(ChromeDriverManager().install(), #Some Changes for fix deprecated executable_path
+            ))
 
             try:
                 driver.get("https://prenotami.esteri.it/")
@@ -63,7 +67,7 @@ class Prenota:
                 password_box = driver.find_element(By.ID, "login-password")
                 email_box.send_keys(email)
                 password_box.send_keys(password)
-                time.sleep(2)
+                time.sleep(4) #2 default
                 button = driver.find_elements(
                     By.XPATH, "//button[contains(@class,'button primary g-recaptcha')]"
                 )
@@ -71,6 +75,7 @@ class Prenota:
                 logging.info(
                     f"Timestamp: {str(datetime.now())} - Successfuly logged in."
                 )
+                time.sleep(10)#Waiting some time to fully load after login and skip errors
 
             except Exception as e:
                 logging.info(f"Exception: {e}")
@@ -81,7 +86,8 @@ class Prenota:
                 if user_config["request_type"] == "citizenship":
                     try:
                         driver.get("https://prenotami.esteri.it/Services/Booking/751")
-
+                        time.sleep(10) #Waiting some time to fully load and skip errors
+                        
                         try:
                             appts_available = driver.find_element(
                                 By.XPATH, "//*[@id='WlNotAvailable']"
@@ -105,11 +111,14 @@ class Prenota:
                             break
                     except Exception as e:
                         logging.info(f"Exception {e}")
-                        break
-
+                        break		
                 elif user_config["request_type"] == "passport":
                     try:
-                        driver.get("https://prenotami.esteri.it/Services/Booking/671")
+                        time.sleep(10) #Waiting some time to fully load and skip errors                        
+                        driver.get("https://prenotami.esteri.it/Services/Booking/671")#/Booking/671
+                        time.sleep(5) #Waiting some time to fully load and skip errors
+                        #driver.get("https://prenotami.esteri.it/Services/Booking/671")
+                        #time.sleep(10) #Waiting some time to fully load and skip errors                       
 
                         try:
                             appts_available = driver.find_element(
@@ -126,43 +135,43 @@ class Prenota:
                             with open("files/passport_form.html", "w") as f:
                                 f.write(driver.page_source)
 
-                            q0 = Select(driver.find_element_by_id("ddls_0"))
+                            q0 = Select(driver.find_element(By.ID,"ddls_0"))
                             q0.select_by_visible_text(
                                 user_config.get("possess_expired_passport")
                             )
 
-                            q1 = Select(driver.find_element_by_id("ddls_1"))
+                            q1 = Select(driver.find_element(By.ID,"ddls_1"))
                             q1.select_by_visible_text(
                                 user_config.get("possess_expired_passport")
                             )
 
-                            q2 = driver.find_element_by_id(
+                            q2 = driver.find_element(By.ID,
                                 "DatiAddizionaliPrenotante_2___testo"
                             )
                             q2.send_keys(user_config.get("total_children"))
 
-                            q3 = driver.find_element_by_id(
+                            q3 = driver.find_element(By.ID,
                                 "DatiAddizionaliPrenotante_3___testo"
                             )
                             q3.send_keys(user_config.get("full_address"))
 
-                            q4 = Select(driver.find_element_by_id("ddls_4"))
+                            q4 = Select(driver.find_element(By.ID,"ddls_4"))
                             q4.select_by_visible_text(user_config.get("marital_status"))
 
                             time.sleep(1)
 
-                            file0 = driver.find_element_by_xpath('//*[@id="File_0"]')
+                            file0 = driver.find_element(By.XPATH,'//*[@id="File_0"]')
                             file0.send_keys(os.getcwd() + "/files/identidade.pdf")
 
                             time.sleep(1)
 
-                            file1 = driver.find_element_by_xpath('//*[@id="File_1"]')
+                            file1 = driver.find_element(By.XPATH,'//*[@id="File_1"]')
                             file1.send_keys(os.getcwd() + "/files/residencia.pdf")
 
-                            checkBox = driver.find_element_by_id("PrivacyCheck")
+                            checkBox = driver.find_element(By.ID,"PrivacyCheck")
                             checkBox.click()
 
-                            form_submit = driver.find_element_by_id("btnAvanti")
+                            form_submit = driver.find_element(By.ID,"btnAvanti")
                             form_submit.click()
 
                             break
