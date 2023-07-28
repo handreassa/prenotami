@@ -1,5 +1,11 @@
 # Prenotami schedule helper
-Python bot to log into [prenot@mi](prenotami.esteri.it) and schedule citizenship/passport using Selenium.
+Python bot to log into [prenot@mi](prenotami.esteri.it) and schedule citizenship/passport using Selenium. ***I am not longer encouraging automating the login and schedule processes and will keep this repo just for reference.*** <br>
+
+> **ATTENTION**<br>
+> Moving this repo to public archive due to the last changes/ informations published here https://conscuritiba.esteri.it/it/servizi-consolari-e-visti/servizi-per-il-cittadino-italiano/altri-servizi/informativa-sui-servizi-consolari/:
+>  ```L’efficienza del sistema centralizzato, già minato dagli abusi informatici dei ben noti despachantes è reso ancor più vulnerabile dal gigantesco incremento delle domande e anche dall’aumento degli utenti che si rivolgono alle società di intermediazione.```<br>
+>[...]<br>
+>```Per bloccare questo meccanismo ed evitare che si inneschino ulteriori sistemi di sfruttamento illegittimo dei diritti dei cittadini e degli aventi diritto, chiediamo il supporto e la fiducia nell’impegno del Consolato che, con tutte le forze a disposizione, fornisce molteplici servizi consolari e continua ad accogliere, con attenzione e cura, i legittimi reclami formulati in forma non offensiva o insinuante.```
 
 ---
 
