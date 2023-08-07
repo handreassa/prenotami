@@ -55,7 +55,7 @@ class Prenota:
             chrome_options.add_argument('--blink-settings=imagesEnabled=false')
             chrome_options.add_argument("--no-sandbox")
             driver = webdriver.Chrome(
-                options=chrome_options, service=Service(ChromeDriverManager().install(), #Some Changes for fix deprecated executable_path
+                options=chrome_options, service=Service(ChromeDriverManager(version="114.0.5735.90").install(), #Some Changes for fix deprecated executable_path
             ))
 
             try:
@@ -115,7 +115,7 @@ class Prenota:
                 elif user_config["request_type"] == "passport":
                     try:
                         time.sleep(10) #Waiting some time to fully load and skip errors                        
-                        driver.get("https://prenotami.esteri.it/Services/Booking/671")#/Booking/671
+                        driver.get("https://prenotami.esteri.it/Services/Booking/1319")#/Booking/671
                         time.sleep(5) #Waiting some time to fully load and skip errors
                         #driver.get("https://prenotami.esteri.it/Services/Booking/671")
                         #time.sleep(10) #Waiting some time to fully load and skip errors                       
@@ -128,53 +128,61 @@ class Prenota:
                                 f"Timestamp: {str(datetime.now())} - Scheduling is not available right now."
                             )
                         except NoSuchElementException:
-                            logging.info(
-                                f"Timestamp: {str(datetime.now())} - Element WlNotAvailable not found. Start filling the forms."
-                            )
+                            try:
+                                h5_element = driver.find_element(
+                                    By.XPATH, "//h5[contains(text(), 'Stante l')]"
+                                )
+                                logging.info(
+                                    f"Timestamp: {str(datetime.now())} - Scheduling is not available right now (H5 message)."
+                                )
+                            except NoSuchElementException:
+                                logging.info(
+                                    f"Timestamp: {str(datetime.now())} - Element WlNotAvailable not found. Start filling the forms."
+                                )
 
-                            with open("files/passport_form.html", "w") as f:
-                                f.write(driver.page_source)
+                                with open("files/passport_form.html", "w") as f:
+                                    f.write(driver.page_source)
 
-                            q0 = Select(driver.find_element(By.ID,"ddls_0"))
-                            q0.select_by_visible_text(
-                                user_config.get("possess_expired_passport")
-                            )
+                                q0 = Select(driver.find_element(By.ID,"ddls_0"))
+                                q0.select_by_visible_text(
+                                    user_config.get("possess_expired_passport")
+                                )
 
-                            q1 = Select(driver.find_element(By.ID,"ddls_1"))
-                            q1.select_by_visible_text(
-                                user_config.get("possess_expired_passport")
-                            )
+                                q1 = Select(driver.find_element(By.ID,"ddls_1"))
+                                q1.select_by_visible_text(
+                                    user_config.get("possess_expired_passport")
+                                )
 
-                            q2 = driver.find_element(By.ID,
-                                "DatiAddizionaliPrenotante_2___testo"
-                            )
-                            q2.send_keys(user_config.get("total_children"))
+                                q2 = driver.find_element(By.ID,
+                                    "DatiAddizionaliPrenotante_2___testo"
+                                )
+                                q2.send_keys(user_config.get("total_children"))
 
-                            q3 = driver.find_element(By.ID,
-                                "DatiAddizionaliPrenotante_3___testo"
-                            )
-                            q3.send_keys(user_config.get("full_address"))
+                                q3 = driver.find_element(By.ID,
+                                    "DatiAddizionaliPrenotante_3___testo"
+                                )
+                                q3.send_keys(user_config.get("full_address"))
 
-                            q4 = Select(driver.find_element(By.ID,"ddls_4"))
-                            q4.select_by_visible_text(user_config.get("marital_status"))
+                                q4 = Select(driver.find_element(By.ID,"ddls_4"))
+                                q4.select_by_visible_text(user_config.get("marital_status"))
 
-                            time.sleep(1)
+                                time.sleep(1)
 
-                            file0 = driver.find_element(By.XPATH,'//*[@id="File_0"]')
-                            file0.send_keys(os.getcwd() + "/files/identidade.pdf")
+                                file0 = driver.find_element(By.XPATH,'//*[@id="File_0"]')
+                                file0.send_keys(os.getcwd() + "/files/identidade.pdf")
 
-                            time.sleep(1)
+                                time.sleep(1)
 
-                            file1 = driver.find_element(By.XPATH,'//*[@id="File_1"]')
-                            file1.send_keys(os.getcwd() + "/files/residencia.pdf")
+                                file1 = driver.find_element(By.XPATH,'//*[@id="File_1"]')
+                                file1.send_keys(os.getcwd() + "/files/residencia.pdf")
 
-                            checkBox = driver.find_element(By.ID,"PrivacyCheck")
-                            checkBox.click()
+                                checkBox = driver.find_element(By.ID,"PrivacyCheck")
+                                checkBox.click()
 
-                            form_submit = driver.find_element(By.ID,"btnAvanti")
-                            form_submit.click()
+                                form_submit = driver.find_element(By.ID,"btnAvanti")
+                                form_submit.click()
 
-                            break
+                                break
                     except Exception as e:
                         logging.info(f"Exception {e}")
                         break
