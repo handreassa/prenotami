@@ -1,5 +1,5 @@
-request_type: "passport" #this value should be either citizenship or passport
-# Only uses the following if using the passport
+request_type: "citizenship" #this value should be either "citizenship" or "passport"
+# Only use the following if using for passport:
 has_under_age_children: "No" #Yes or No
 total_children: "0" # Total number of children
 possess_expired_passport: "No" # Yes or No
